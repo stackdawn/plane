@@ -53,3 +53,32 @@ class ProjectIssueType(ProjectBaseModel):
 
     def __str__(self):
         return f"{self.project} - {self.issue_type}"
+
+
+DEFAULT_ISSUE_TYPE_NAME = "Task"
+
+
+def ensure_default_issue_type(project, created_by=None):
+    """Return the project's default work item type, creating it on first use.
+
+    Types are stored workspace-wide in `issue_types` but this implementation
+    keeps one set per project: every type is linked to exactly one project
+    through `project_issue_types`.
+    """
+    link = ProjectIssueType.objects.filter(project=project, is_default=True).select_related("issue_type").first()
+    if link:
+        return link.issue_type
+
+    issue_type = IssueType.objects.create(
+        workspace_id=project.workspace_id,
+        name=DEFAULT_ISSUE_TYPE_NAME,
+        description="Default work item type",
+        is_default=True,
+    )
+    ProjectIssueType.objects.create(
+        project=project,
+        workspace_id=project.workspace_id,
+        issue_type=issue_type,
+        is_default=True,
+    )
+    return issue_type

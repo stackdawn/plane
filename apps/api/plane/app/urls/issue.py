@@ -21,6 +21,7 @@ from plane.app.views import (
     ProjectUserDisplayPropertyEndpoint,
     IssueViewSet,
     LabelViewSet,
+    IssueTypeViewSet,
     BulkArchiveIssuesEndpoint,
     DeletedIssuesListViewSet,
     IssuePaginatedViewSet,
@@ -282,5 +283,16 @@ urlpatterns = [
         "workspaces/<str:slug>/work-items/<str:project_identifier>-<str:issue_identifier>/",
         IssueDetailIdentifierEndpoint.as_view(),
         name="issue-detail-identifier",
+    ),
+    # work item types
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/",
+        IssueTypeViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-issue-types",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/<uuid:pk>/",
+        IssueTypeViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
+        name="project-issue-types",
     ),
 ]

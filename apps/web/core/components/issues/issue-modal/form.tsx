@@ -34,6 +34,7 @@ import {
   IssueDescriptionEditor,
   IssueParentTag,
   IssueProjectSelect,
+  IssueTypeSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
 // helpers
@@ -368,6 +369,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                     disabled={!!data?.id || !!data?.sourceIssueId || isProjectSelectionDisabled}
                     handleFormChange={handleFormChange}
                   />
+                  <IssueTypeSelect control={control} workspaceSlug={workspaceSlug?.toString()} projectId={projectId} />
                 </div>
               </div>
               {watch("parent_id") && selectedParentIssue && (

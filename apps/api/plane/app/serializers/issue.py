@@ -20,6 +20,7 @@ from .workspace import WorkspaceLiteSerializer
 from plane.db.models import (
     User,
     Issue,
+    IssueType,
     IssueActivity,
     IssueComment,
     ProjectUserProperty,
@@ -97,6 +98,9 @@ class IssueCreateSerializer(BaseSerializer):
         write_only=True,
         required=False,
     )
+    type_id = serializers.PrimaryKeyRelatedField(
+        source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
+    )
     project_id = serializers.UUIDField(source="project.id", read_only=True)
     workspace_id = serializers.UUIDField(source="workspace.id", read_only=True)
 
@@ -164,6 +168,14 @@ class IssueCreateSerializer(BaseSerializer):
                     id__in=label_ids,
                 ).values_list("id", flat=True)
             )
+
+        # Check work item type is linked to the project
+        if attrs.get("type") and not IssueType.objects.filter(
+            pk=attrs["type"].pk,
+            project_issue_types__project_id=self.context.get("project_id"),
+            project_issue_types__deleted_at__isnull=True,
+        ).exists():
+            raise serializers.ValidationError("Work item type does not belong to this project")
 
         # Check state is from the project only else raise validation error
         if (
