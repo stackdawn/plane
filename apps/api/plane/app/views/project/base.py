@@ -25,6 +25,7 @@ from plane.app.serializers import (
 from plane.app.views.base import BaseAPIView, BaseViewSet
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity, webhook_activity
+from plane.db.models import ensure_default_issue_type
 from plane.db.models import (
     UserFavorite,
     DeployBoard,
@@ -355,6 +356,8 @@ class ProjectViewSet(BaseViewSet):
 
         if serializer.is_valid():
             serializer.save()
+            if serializer.instance.is_issue_type_enabled:
+                ensure_default_issue_type(project)
             if intake_view:
                 intake = Intake.objects.filter(project=project, is_default=True).first()
                 if not intake:

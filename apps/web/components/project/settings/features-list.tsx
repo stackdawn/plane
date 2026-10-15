@@ -20,6 +20,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { UpgradeBadge } from "@/components/workspace/upgrade-badge";
 // local imports
 import { ProjectFeatureToggle } from "./helper";
+import { WorkItemTypesSettings } from "./work-item-types";
 
 type Props = {
   workspaceSlug: string;
@@ -70,6 +71,15 @@ const PROJECT_FEATURES_LIST = {
     title: "Intake",
     description: "Consider and discuss work items before you add them to your project.",
     icon: <IntakeOutline className="h-5 w-5 flex-shrink-0 text-tertiary" />,
+    isPro: false,
+    isEnabled: true,
+  },
+  workItemTypes: {
+    key: "work_item_type_feature",
+    property: "is_issue_type_enabled",
+    title: "Work item types",
+    description: "Classify work items as bugs, features, tasks or your own types.",
+    icon: <ViewsOutline className="h-5 w-5 flex-shrink-0 text-tertiary" />,
     isPro: false,
     isEnabled: true,
   },
@@ -135,9 +145,10 @@ export const ProjectFeaturesList = observer(function ProjectFeaturesList(props: 
                   />
                 }
               />
-              {/* {currentProjectDetails?.[featureItem.property as keyof IProject] && (
-                <div className="pl-14">{featureItem.renderChildren?.(currentProjectDetails, workspaceSlug)}</div>
-              )} */}
+              {featureItem.property === "is_issue_type_enabled" &&
+                currentProjectDetails?.[featureItem.property as keyof IProject] && (
+                  <WorkItemTypesSettings workspaceSlug={workspaceSlug} projectId={projectId} isAdmin={isAdmin} />
+                )}
             </div>
           ))}
         </div>
