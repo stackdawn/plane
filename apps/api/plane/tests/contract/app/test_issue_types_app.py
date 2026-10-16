@@ -104,3 +104,25 @@ class TestIssueTypes:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.django_db
+    def test_logo_props_accepts_glyph_color_and_small_image_only(self, session_client, workspace, project):
+        created = session_client.post(_url(workspace.slug, project.id), {"name": "Bug"}, format="json").json()
+        url = _url(workspace.slug, project.id, created["id"])
+        tiny = "data:image/png;base64,iVBORw0KGgo="
+
+        ok = session_client.patch(
+            url, {"logo_props": {"glyph": "rocket", "color": "#3E63DD", "image": tiny}}, format="json"
+        )
+        assert ok.status_code == status.HTTP_200_OK
+        assert ok.json()["logo_props"] == {"glyph": "rocket", "color": "#3E63DD", "image": tiny}
+
+        for bad in (
+            {"glyph": "not-an-icon"},
+            {"color": "red"},
+            {"image": "https://example.com/x.png"},
+            {"image": "data:text/html;base64,PHNjcmlwdD4="},
+            {"image": "data:image/png;base64," + "A" * 70_000},
+        ):
+            response = session_client.patch(url, {"logo_props": bad}, format="json")
+            assert response.status_code == status.HTTP_400_BAD_REQUEST, bad

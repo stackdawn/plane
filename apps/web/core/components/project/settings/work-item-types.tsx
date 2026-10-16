@@ -9,7 +9,8 @@ import { observer } from "mobx-react";
 // plane imports
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // hooks
-import { ISSUE_TYPE_COLORS, IssueTypeIcon, getIssueTypeVisual } from "@/components/issues/issue-type-icon";
+import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
+import { IssueTypeIconPicker } from "@/components/issues/issue-type-icon-picker";
 import { useProjectIssueTypes } from "@/hooks/use-project-issue-types";
 import { issueTypeService } from "@/services/issue/issue_type.service";
 
@@ -25,6 +26,7 @@ export const WorkItemTypesSettings = observer(function WorkItemTypesSettings(pro
   // state
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   // hooks
   const { issueTypes, mutate, isLoading } = useProjectIssueTypes(workspaceSlug, projectId, true);
 
@@ -51,12 +53,12 @@ export const WorkItemTypesSettings = observer(function WorkItemTypesSettings(pro
     }
   };
 
-  const handleColor = async (issueTypeId: string, color: string, logoProps: Record<string, unknown>) => {
+  const handleLogo = async (issueTypeId: string, logoProps: Record<string, unknown>) => {
     try {
-      await issueTypeService.update(workspaceSlug, projectId, issueTypeId, { logo_props: { ...logoProps, color } });
+      await issueTypeService.update(workspaceSlug, projectId, issueTypeId, { logo_props: logoProps });
       await mutate();
     } catch (error) {
-      showError(error, "Could not change the color.");
+      showError(error, "Could not change the icon.");
     }
   };
 
@@ -78,40 +80,36 @@ export const WorkItemTypesSettings = observer(function WorkItemTypesSettings(pro
       <ul className="mt-3 flex flex-col gap-y-1.5">
         {isLoading && <li className="text-caption-md-regular text-tertiary">Loading...</li>}
         {issueTypes.map((issueType) => (
-          <li
-            key={issueType.id}
-            className="flex items-center justify-between rounded-md bg-layer-1 px-3 py-2 text-body-sm-regular text-primary"
-          >
-            <span className="flex items-center gap-2">
-              <IssueTypeIcon issueType={issueType} />
-              {issueType.name}
-              {issueType.is_default && <span className="ml-2 text-caption-sm-regular text-tertiary">Default</span>}
-            </span>
-            {isAdmin && (
-              <span className="mr-4 ml-auto flex items-center gap-1">
-                {ISSUE_TYPE_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    aria-label={`Set ${issueType.name} color ${color}`}
-                    onClick={() => handleColor(issueType.id, color, issueType.logo_props)}
-                    className="size-3.5 rounded-full border border-subtle"
-                    style={{
-                      backgroundColor: color,
-                      outline: getIssueTypeVisual(issueType).color === color ? "2px solid currentColor" : "none",
-                    }}
-                  />
-                ))}
+          <li key={issueType.id}>
+            <div className="flex items-center justify-between rounded-md bg-layer-1 px-3 py-2 text-body-sm-regular text-primary">
+              <span className="flex items-center gap-2">
+                <IssueTypeIcon issueType={issueType} />
+                {issueType.name}
+                {issueType.is_default && <span className="ml-2 text-caption-sm-regular text-tertiary">Default</span>}
               </span>
-            )}
-            {isAdmin && !issueType.is_default && (
-              <button
-                type="button"
-                className="text-caption-md-medium text-danger-primary"
-                onClick={() => handleDelete(issueType.id)}
-              >
-                Delete
-              </button>
+              <span className="flex items-center gap-4">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="text-caption-md-medium text-secondary"
+                    onClick={() => setEditingId(editingId === issueType.id ? null : issueType.id)}
+                  >
+                    {editingId === issueType.id ? "Done" : "Edit icon"}
+                  </button>
+                )}
+                {isAdmin && !issueType.is_default && (
+                  <button
+                    type="button"
+                    className="text-caption-md-medium text-danger-primary"
+                    onClick={() => handleDelete(issueType.id)}
+                  >
+                    Delete
+                  </button>
+                )}
+              </span>
+            </div>
+            {isAdmin && editingId === issueType.id && (
+              <IssueTypeIconPicker issueType={issueType} onSave={(logoProps) => handleLogo(issueType.id, logoProps)} />
             )}
           </li>
         ))}

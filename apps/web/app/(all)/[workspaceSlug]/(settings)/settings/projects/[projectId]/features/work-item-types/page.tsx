@@ -21,6 +21,7 @@ import type { Route } from "./+types/page";
 import { FeaturesWorkItemTypesProjectSettingsHeader } from "./header";
 import { SettingsHeading } from "@/components/settings/heading";
 import { WorkItemTypesSettings } from "@/components/project/settings/work-item-types";
+import { CustomPropertiesSettings } from "@/components/project/settings/custom-properties";
 
 function FeaturesWorkItemTypesSettingsPage({ params }: Route.ComponentProps) {
   const { workspaceSlug, projectId } = params;
@@ -57,11 +58,18 @@ function FeaturesWorkItemTypesSettingsPage({ params }: Route.ComponentProps) {
             workspaceSlug={workspaceSlug}
           />
           {currentProjectDetails?.is_issue_type_enabled && (
-            <WorkItemTypesSettings
-              workspaceSlug={workspaceSlug}
-              projectId={projectId}
-              isAdmin={canPerformProjectAdminActions}
-            />
+            <>
+              <WorkItemTypesSettings
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                isAdmin={canPerformProjectAdminActions}
+              />
+              <CustomPropertiesSettings
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                isAdmin={canPerformProjectAdminActions}
+              />
+            </>
           )}
         </div>
       </section>

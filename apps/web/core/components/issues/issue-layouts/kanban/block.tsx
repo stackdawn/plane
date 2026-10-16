@@ -94,7 +94,24 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
 
   return (
     <>
-      <div className="relative">
+      <Tooltip tooltipContent={issue.name} isMobile={isMobile} renderByDefault={false}>
+        <div className="line-clamp-2 w-full text-body-sm-medium text-primary">
+          <span>{issue.name}</span>
+        </div>
+      </Tooltip>
+
+      <IssueProperties
+        className="flex flex-wrap items-center gap-2 pt-1.5 whitespace-nowrap text-tertiary"
+        issue={issue}
+        displayProperties={displayProperties}
+        activeLayout="Kanban"
+        updateIssue={updateIssue}
+        isReadOnly={isReadOnly}
+        isEpic={isEpic}
+      />
+
+      {/* Jira-style footer: type icon and key at the bottom of the card */}
+      <div className="relative mt-2 flex min-h-5 items-center">
         {issue.project_id && (
           <IssueIdentifier
             issueId={issue.id}
@@ -119,22 +136,6 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
           })}
         </div>
       </div>
-
-      <Tooltip tooltipContent={issue.name} isMobile={isMobile} renderByDefault={false}>
-        <div className="line-clamp-1 w-full text-body-sm-medium text-primary">
-          <span>{issue.name}</span>
-        </div>
-      </Tooltip>
-
-      <IssueProperties
-        className="flex flex-wrap items-center gap-2 pt-1.5 whitespace-nowrap text-tertiary"
-        issue={issue}
-        displayProperties={displayProperties}
-        activeLayout="Kanban"
-        updateIssue={updateIssue}
-        isReadOnly={isReadOnly}
-        isEpic={isEpic}
-      />
     </>
   );
 });
