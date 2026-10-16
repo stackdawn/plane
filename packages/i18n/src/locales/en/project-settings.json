@@ -323,6 +323,13 @@
       "description": "Create and customize different types of work items with unique properties"
     },
     "features": {
+      "work_item_types": {
+        "title": "Work item types",
+        "short_title": "Work item types",
+        "description": "Classify work items as bugs, features, tasks or your own types.",
+        "toggle_title": "Enable work item types",
+        "toggle_description": "Admins define the types; members pick one when creating a work item."
+      },
       "cycles": {
         "title": "Cycles",
         "short_title": "Cycles",

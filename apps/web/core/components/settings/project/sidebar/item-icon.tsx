@@ -30,6 +30,7 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   features_views: ViewsIcon,
   features_pages: PageIcon,
   features_intake: IntakeIcon,
+  features_work_item_types: ViewsIcon,
   states: StatePropertyIcon,
   labels: LabelPropertyIcon,
   estimates: EstimatePropertyIcon,
