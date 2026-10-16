@@ -4,6 +4,8 @@
 
 """Contract tests for project custom properties and their per-work-item values (fork feature)."""
 
+import json
+
 import pytest
 from rest_framework import status
 
@@ -138,7 +140,7 @@ class TestCustomPropertyValues:
         select = _create(
             session_client, workspace, project, name="Area", property_type="select", options=[{"name": "UI"}]
         ).json()
-        stranger = User.objects.create(email="outsider@plane.so")
+        stranger = User.objects.create(email="outsider@plane.so", username="outsider")
         other = _create(
             session_client, workspace, project, name="Other", property_type="select", options=[{"name": "Z"}]
         ).json()
@@ -196,17 +198,22 @@ class TestCustomPropertyValues:
 @pytest.mark.contract
 class TestGroupAndFilterByType:
     @pytest.mark.django_db
-    def test_filter_by_type_id(self, session_client, workspace, project, issue):
+    @pytest.mark.parametrize("style", ["legacy", "rich"])
+    def test_filter_by_type(self, session_client, workspace, project, issue, style):
         bug = session_client.post(
             f"/api/workspaces/{workspace.slug}/projects/{project.id}/issue-types/", {"name": "Bug"}, format="json"
         ).json()
-        state = issue.state
-        typed = Issue.objects.create(name="typed", project=project, workspace=workspace, state=state, type_id=bug["id"])
-
-        response = session_client.get(
-            f"/api/workspaces/{workspace.slug}/projects/{project.id}/issues/",
-            {"type_id": bug["id"], "per_page": 50},
+        typed = Issue.objects.create(
+            name="typed", project=project, workspace=workspace, state=issue.state, type_id=bug["id"]
         )
+        params = {"per_page": 50}
+        if style == "legacy":
+            params["issue_type"] = bug["id"]
+        else:
+            params["filters"] = json.dumps({"type_id__in": [bug["id"]]})
+
+        response = session_client.get(f"/api/workspaces/{workspace.slug}/projects/{project.id}/issues/", params)
+
         assert response.status_code == status.HTTP_200_OK
         body = response.json()
         rows = body.get("results", body)

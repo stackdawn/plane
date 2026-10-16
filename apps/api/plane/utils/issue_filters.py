@@ -186,6 +186,18 @@ def filter_mentions(params, issue_filter, method, prefix=""):
     return issue_filter
 
 
+def filter_issue_type(params, issue_filter, method, prefix=""):
+    """Work item type: comma separated ids, "None" matches items without a type."""
+    raw = params.get("issue_type") or ""
+    values = [item for item in (raw.split(",") if method == "GET" else raw) if item and item != "null"]
+    if "None" in values:
+        issue_filter[f"{prefix}type__isnull"] = True
+    ids = filter_valid_uuids(values)
+    if ids:
+        issue_filter[f"{prefix}type_id__in"] = ids
+    return issue_filter
+
+
 def filter_created_by(params, issue_filter, method, prefix=""):
     if method == "GET":
         created_bys = [item for item in params.get("created_by").split(",") if item != "null"]
@@ -438,6 +450,7 @@ def issue_filters(query_params, method, prefix=""):
         "assignees": filter_assignees,
         "mentions": filter_mentions,
         "created_by": filter_created_by,
+        "issue_type": filter_issue_type,
         "logged_by": filter_logged_by,
         "name": filter_name,
         "created_at": filter_created_at,
