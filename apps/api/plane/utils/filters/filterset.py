@@ -154,6 +154,9 @@ class IssueFilterSet(BaseFilterSet):
     created_by_id = filters.UUIDFilter(field_name="created_by_id")
     created_by_id__in = UUIDInFilter(field_name="created_by_id", lookup_expr="in")
 
+    type_id = filters.UUIDFilter(field_name="type_id")
+    type_id__in = UUIDInFilter(field_name="type_id", lookup_expr="in")
+
     is_archived = filters.BooleanFilter(method="filter_is_archived")
 
     state_group = filters.CharFilter(field_name="state__group")

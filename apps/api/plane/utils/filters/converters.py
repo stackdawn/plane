@@ -20,6 +20,7 @@ class LegacyToRichFiltersConverter:
         "assignees": "assignee_id",
         "mentions": "mention_id",
         "created_by": "created_by_id",
+        "issue_type": "type_id",
         "state_group": "state_group",
         "priority": "priority",
         "project": "project_id",
@@ -36,6 +37,7 @@ class LegacyToRichFiltersConverter:
         "assignee_id",
         "mention_id",
         "created_by_id",
+        "type_id",
         "project_id",
     }
 

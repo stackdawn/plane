@@ -93,6 +93,7 @@ ISSUE_GROUP_BY_ALLOWLIST = frozenset({
     "cycle_id",
     "project_id",
     "created_by",
+    "type_id",
     "target_date",
     "start_date",
 })

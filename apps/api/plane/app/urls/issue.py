@@ -22,6 +22,8 @@ from plane.app.views import (
     IssueViewSet,
     LabelViewSet,
     IssueTypeViewSet,
+    CustomPropertyViewSet,
+    IssueCustomPropertyValueEndpoint,
     BulkArchiveIssuesEndpoint,
     DeletedIssuesListViewSet,
     IssuePaginatedViewSet,
@@ -294,5 +296,21 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issue-types/<uuid:pk>/",
         IssueTypeViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
         name="project-issue-types",
+    ),
+    # custom properties
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-properties/",
+        CustomPropertyViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-custom-properties",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-properties/<uuid:pk>/",
+        CustomPropertyViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
+        name="project-custom-properties",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/custom-property-values/",
+        IssueCustomPropertyValueEndpoint.as_view(),
+        name="issue-custom-property-values",
     ),
 ]

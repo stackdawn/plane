@@ -55,6 +55,7 @@ from .cycle import (
 )
 from .asset import FileAssetSerializer
 from .issue_type import IssueTypeSerializer
+from .custom_property import CustomPropertySerializer, CustomPropertyOptionSerializer
 from .issue import (
     IssueCreateSerializer,
     IssueActivitySerializer,
