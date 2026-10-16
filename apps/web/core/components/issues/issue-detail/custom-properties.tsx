@@ -71,6 +71,7 @@ export function PropertyEditor({ property, value, disabled, projectId, onChange 
       disabled,
       projectId,
       placeholder: "Add person",
+      showUserDetails: true,
       className: "group w-full grow",
       buttonContainerClassName: "w-full text-left h-7.5",
       buttonClassName: `text-body-xs-regular justify-between ${asList.length > 0 ? "" : "text-placeholder"}`,
