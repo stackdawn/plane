@@ -12,10 +12,18 @@ import type { TIssueIdentifierProps } from "@plane/types";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectIssueTypes } from "@/hooks/use-project-issue-types";
+import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
 import { IdentifierText } from "@/components/issues/issue-detail/identifier-text";
 
 export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueIdentifierProps) {
-  const { projectId, variant, size, displayProperties, enableClickToCopyIdentifier = false } = props;
+  const {
+    projectId,
+    variant,
+    size,
+    displayProperties,
+    enableClickToCopyIdentifier = false,
+    hideTypeIcon = false,
+  } = props;
   // store hooks
   const { getProjectIdentifierById, getProjectById } = useProject();
   const { workspaceSlug } = useParams();
@@ -29,26 +37,27 @@ export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueId
   const projectIdentifier = isUsingStoreData ? getProjectIdentifierById(projectId) : props.projectIdentifier;
   const issueSequenceId = isUsingStoreData ? issue?.sequence_id : props.issueSequenceId;
   const shouldRenderIssueID = displayProperties ? displayProperties.key : true;
-  // work item type badge (only for projects with types enabled, and never for the default type)
+  // work item type icon (only for projects with types enabled)
   const isIssueTypeEnabled = isUsingStoreData && !!getProjectById(projectId)?.is_issue_type_enabled;
-  const { issueTypes } = useProjectIssueTypes(workspaceSlug?.toString(), projectId, isIssueTypeEnabled);
-  const issueType = issue?.type_id ? issueTypes.find((type) => type.id === issue.type_id) : undefined;
+  const { issueTypes, defaultIssueType } = useProjectIssueTypes(
+    workspaceSlug?.toString(),
+    projectId,
+    isIssueTypeEnabled
+  );
+  const issueType =
+    (issue?.type_id ? issueTypes.find((type) => type.id === issue.type_id) : undefined) ?? defaultIssueType;
 
   if (!shouldRenderIssueID) return null;
 
   return (
     <div className="flex shrink-0 items-center space-x-2">
+      {isIssueTypeEnabled && !hideTypeIcon && issueType && <IssueTypeIcon issueType={issueType} size={14} />}
       <IdentifierText
         identifier={`${projectIdentifier}-${issueSequenceId}`}
         enableClickToCopyIdentifier={enableClickToCopyIdentifier}
         variant={variant}
         size={size}
       />
-      {issueType && !issueType.is_default && (
-        <span className="rounded-sm bg-layer-1 px-1.5 py-0.5 text-caption-sm-medium text-secondary">
-          {issueType.name}
-        </span>
-      )}
     </div>
   );
 });

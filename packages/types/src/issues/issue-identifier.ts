@@ -16,6 +16,7 @@ export type TIssueIdentifierBaseProps = {
   variant?: TIdentifierTextVariant;
   displayProperties?: IIssueDisplayProperties | undefined;
   enableClickToCopyIdentifier?: boolean;
+  hideTypeIcon?: boolean;
 };
 
 export type TIssueIdentifierFromStore = TIssueIdentifierBaseProps & {

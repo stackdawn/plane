@@ -11,6 +11,7 @@ import { Controller } from "react-hook-form";
 import type { TIssue } from "@plane/types";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+import { IssueTypeDropdown } from "@/components/issues/issue-type-dropdown";
 import { useProjectIssueTypes } from "@/hooks/use-project-issue-types";
 
 type Props = {
@@ -34,19 +35,12 @@ export const IssueTypeSelect = observer(function IssueTypeSelect(props: Props) {
       control={control}
       name="type_id"
       render={({ field: { value, onChange } }) => (
-        <select
-          aria-label="Work item type"
+        <IssueTypeDropdown
+          issueTypes={issueTypes}
+          value={value ?? defaultIssueType?.id}
+          onChange={onChange}
           disabled={disabled}
-          value={value ?? defaultIssueType?.id ?? ""}
-          onChange={(event) => onChange(event.target.value || null)}
-          className="rounded-md border border-subtle bg-transparent px-2 py-1 text-caption-md-medium text-secondary"
-        >
-          {issueTypes.map((issueType) => (
-            <option key={issueType.id} value={issueType.id}>
-              {issueType.name}
-            </option>
-          ))}
-        </select>
+        />
       )}
     />
   );

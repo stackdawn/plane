@@ -16,4 +16,4 @@ export type TIssueType = {
   workspace: string;
 };
 
-export type TIssueTypePayload = Partial<Pick<TIssueType, "name" | "description" | "is_active">>;
+export type TIssueTypePayload = Partial<Pick<TIssueType, "name" | "description" | "is_active" | "logo_props">>;

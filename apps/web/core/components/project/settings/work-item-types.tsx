@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 // plane imports
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 // hooks
+import { ISSUE_TYPE_COLORS, IssueTypeIcon, getIssueTypeVisual } from "@/components/issues/issue-type-icon";
 import { useProjectIssueTypes } from "@/hooks/use-project-issue-types";
 import { issueTypeService } from "@/services/issue/issue_type.service";
 
@@ -50,6 +51,15 @@ export const WorkItemTypesSettings = observer(function WorkItemTypesSettings(pro
     }
   };
 
+  const handleColor = async (issueTypeId: string, color: string, logoProps: Record<string, unknown>) => {
+    try {
+      await issueTypeService.update(workspaceSlug, projectId, issueTypeId, { logo_props: { ...logoProps, color } });
+      await mutate();
+    } catch (error) {
+      showError(error, "Could not change the color.");
+    }
+  };
+
   const handleDelete = async (issueTypeId: string) => {
     try {
       await issueTypeService.remove(workspaceSlug, projectId, issueTypeId);
@@ -72,10 +82,28 @@ export const WorkItemTypesSettings = observer(function WorkItemTypesSettings(pro
             key={issueType.id}
             className="flex items-center justify-between rounded-md bg-layer-1 px-3 py-2 text-body-sm-regular text-primary"
           >
-            <span>
+            <span className="flex items-center gap-2">
+              <IssueTypeIcon issueType={issueType} />
               {issueType.name}
               {issueType.is_default && <span className="ml-2 text-caption-sm-regular text-tertiary">Default</span>}
             </span>
+            {isAdmin && (
+              <span className="mr-4 ml-auto flex items-center gap-1">
+                {ISSUE_TYPE_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    aria-label={`Set ${issueType.name} color ${color}`}
+                    onClick={() => handleColor(issueType.id, color, issueType.logo_props)}
+                    className="size-3.5 rounded-full border border-subtle"
+                    style={{
+                      backgroundColor: color,
+                      outline: getIssueTypeVisual(issueType).color === color ? "2px solid currentColor" : "none",
+                    }}
+                  />
+                ))}
+              </span>
+            )}
             {isAdmin && !issueType.is_default && (
               <button
                 type="button"

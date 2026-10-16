@@ -792,6 +792,7 @@ class IssueSerializer(DynamicBaseSerializer):
     sub_issues_count = serializers.IntegerField(read_only=True)
     attachment_count = serializers.IntegerField(read_only=True)
     link_count = serializers.IntegerField(read_only=True)
+    type_id = serializers.UUIDField(read_only=True, allow_null=True)
 
     class Meta:
         model = Issue
@@ -813,6 +814,7 @@ class IssueSerializer(DynamicBaseSerializer):
             "label_ids",
             "assignee_ids",
             "sub_issues_count",
+            "type_id",
             "created_at",
             "updated_at",
             "created_by",
@@ -865,6 +867,7 @@ class IssueListDetailSerializer(serializers.Serializer):
             "sequence_id": instance.sequence_id,
             "project_id": instance.project_id,
             "parent_id": instance.parent_id,
+            "type_id": instance.type_id,
             "created_at": instance.created_at,
             "updated_at": instance.updated_at,
             "created_by": instance.created_by_id,
