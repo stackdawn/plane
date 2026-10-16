@@ -14,7 +14,6 @@ import type { TIssue } from "@plane/types";
 // components
 import { PropertyEditor } from "@/components/issues/issue-detail/custom-properties";
 // hooks
-import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { customPropertyService } from "@/services/issue/custom_property.service";
 import { clearPendingCustomValues, getPendingCustomValue, setPendingCustomValue } from "@/store/pending-custom-values";
@@ -29,10 +28,6 @@ type Props = {
 export const IssueModalCustomProperties = observer(function IssueModalCustomProperties(props: Props) {
   const { control, workspaceSlug, projectId } = props;
   const { getProjectById } = useProject();
-  const {
-    project: { projectMemberIds },
-    getUserDetails,
-  } = useMember();
   const typeId = useWatch({ control, name: "type_id" });
   const isEnabled = !!getProjectById(projectId)?.is_issue_type_enabled;
   const { data: properties = [] } = useSWR(
@@ -52,24 +47,19 @@ export const IssueModalCustomProperties = observer(function IssueModalCustomProp
   );
   if (!isEnabled || applicable.length === 0) return null;
 
-  const memberOptions = (projectMemberIds ?? []).map((memberId) => ({
-    id: memberId,
-    name: getUserDetails(memberId)?.display_name ?? memberId,
-  }));
-
   return (
     <div className="grid grid-cols-1 gap-2 border-t border-subtle pt-3 sm:grid-cols-2">
       {applicable.map((property) => (
-        <label key={property.id} className="flex flex-col gap-1 text-caption-md-medium text-secondary">
+        <div key={property.id} className="flex flex-col gap-1 text-caption-md-medium text-secondary">
           {property.name}
           <PropertyEditor
             property={property}
             value={getPendingCustomValue(property.id)}
             disabled={false}
-            memberOptions={memberOptions}
+            projectId={projectId ?? ""}
             onChange={(value) => setPendingCustomValue(property.id, value)}
           />
-        </label>
+        </div>
       ))}
     </div>
   );

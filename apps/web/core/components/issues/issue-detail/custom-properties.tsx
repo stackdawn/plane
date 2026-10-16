@@ -12,10 +12,11 @@ import { SlidersHorizontal } from "lucide-react";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import type { TCustomProperty, TCustomPropertyValue } from "@plane/types";
 // components
+import { CustomSearchSelect } from "@plane/ui";
+import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { customPropertyService } from "@/services/issue/custom_property.service";
 
@@ -26,83 +27,114 @@ type Props = {
   disabled: boolean;
 };
 
-const FIELD_CLASS =
-  "w-full rounded-md border border-subtle bg-transparent px-2 py-1 text-body-xs-regular text-primary disabled:opacity-60";
+const INPUT_CLASS =
+  "h-7.5 w-full rounded-md border border-transparent bg-transparent px-2 text-body-xs-regular text-primary hover:bg-layer-1 focus:border-subtle focus:bg-layer-1 focus:outline-none disabled:opacity-60 disabled:hover:bg-transparent";
+const SELECT_BUTTON_CLASS = "h-7.5 w-full justify-between text-left text-body-xs-regular";
 
 export type TEditorProps = {
   property: TCustomProperty;
   value: TCustomPropertyValue | undefined;
   disabled: boolean;
-  memberOptions: { id: string; name: string }[];
+  projectId: string;
   onChange: (value: TCustomPropertyValue) => void;
 };
 
-export function PropertyEditor({ property, value, disabled, memberOptions, onChange }: TEditorProps) {
+/** One editor per property kind, built from the same dropdowns the built-in properties use. */
+export function PropertyEditor({ property, value, disabled, projectId, onChange }: TEditorProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const asList = Array.isArray(value) ? value : value ? [String(value)] : [];
 
   if (property.property_type === "text" || property.property_type === "number") {
     const isNumber = property.property_type === "number";
+    const stored = value === null || value === undefined ? "" : String(value);
     return (
       <input
         type={isNumber ? "number" : "text"}
         step="any"
         disabled={disabled}
-        className={FIELD_CLASS}
-        value={draft ?? (value === null || value === undefined ? "" : String(value))}
+        placeholder={isNumber ? "Add number" : "Add text"}
+        className={INPUT_CLASS}
+        value={draft ?? stored}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
           if (draft === null) return;
           const next = draft.trim();
           setDraft(null);
-          if (next !== (value === null || value === undefined ? "" : String(value)))
-            onChange(next === "" ? null : next);
+          if (next !== stored) onChange(next === "" ? null : next);
         }}
       />
     );
   }
 
-  const options =
-    property.property_type === "person"
-      ? memberOptions
-      : property.options.filter((option) => option.is_active).map((option) => ({ id: option.id, name: option.name }));
-  const isMulti =
-    property.property_type === "multi_select" || (property.property_type === "person" && property.is_multi);
-
-  if (!isMulti) {
-    return (
-      <select
-        disabled={disabled}
-        className={FIELD_CLASS}
-        value={asList[0] ?? ""}
-        onChange={(event) => onChange(event.target.value || null)}
-      >
-        <option value="">None</option>
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.name}
-          </option>
-        ))}
-      </select>
+  if (property.property_type === "person") {
+    const common = {
+      disabled,
+      projectId,
+      placeholder: "Add person",
+      className: "group w-full grow",
+      buttonContainerClassName: "w-full text-left h-7.5",
+      buttonClassName: `text-body-xs-regular justify-between ${asList.length > 0 ? "" : "text-placeholder"}`,
+      hideIcon: asList.length === 0,
+      dropdownArrow: true,
+      dropdownArrowClassName: "h-3.5 w-3.5 hidden group-hover:inline",
+    };
+    return property.is_multi ? (
+      <MemberDropdown
+        {...common}
+        multiple
+        value={asList}
+        onChange={(ids: string[]) => onChange(ids)}
+        buttonVariant={asList.length > 1 ? "transparent-without-text" : "transparent-with-text"}
+      />
+    ) : (
+      <MemberDropdown
+        {...common}
+        multiple={false}
+        value={asList[0] ?? null}
+        onChange={(id: string | null) => onChange(id ?? null)}
+        buttonVariant="transparent-with-text"
+      />
     );
   }
 
+  const options = property.options
+    .filter((option) => option.is_active)
+    .map((option) => ({ value: option.id, query: option.name, content: <span>{option.name}</span> }));
+  const names = asList.map((id) => options.find((option) => option.value === id)?.query).filter(Boolean);
+  const label = (
+    <span className={names.length > 0 ? "text-primary" : "text-placeholder"}>
+      {names.length > 0 ? names.join(", ") : property.property_type === "multi_select" ? "Add options" : "Select"}
+    </span>
+  );
+
+  if (property.property_type === "multi_select") {
+    return (
+      <CustomSearchSelect
+        multiple
+        value={asList}
+        onChange={(ids: string[]) => onChange(ids)}
+        options={options}
+        label={label}
+        disabled={disabled}
+        className="w-full"
+        buttonClassName={SELECT_BUTTON_CLASS}
+        optionsClassName="w-48"
+        maxHeight="md"
+      />
+    );
+  }
   return (
-    <div className="flex w-full flex-col gap-1">
-      {options.map((option) => (
-        <label key={option.id} className="flex items-center gap-2 text-body-xs-regular text-primary">
-          <input
-            type="checkbox"
-            disabled={disabled}
-            checked={asList.includes(option.id)}
-            onChange={(event) =>
-              onChange(event.target.checked ? [...asList, option.id] : asList.filter((id) => id !== option.id))
-            }
-          />
-          {option.name}
-        </label>
-      ))}
-    </div>
+    <CustomSearchSelect
+      value={asList[0] ?? null}
+      onChange={(id: string | null) => onChange(id || null)}
+      options={[{ value: "", query: "none", content: <span className="text-tertiary">None</span> }, ...options]}
+      label={label}
+      disabled={disabled}
+      className="w-full"
+      buttonClassName={SELECT_BUTTON_CLASS}
+      optionsClassName="w-48"
+      maxHeight="md"
+    />
   );
 }
 
@@ -113,10 +145,6 @@ export const IssueCustomProperties = observer(function IssueCustomProperties(pro
   const {
     issue: { getIssueById },
   } = useIssueDetail();
-  const {
-    project: { projectMemberIds },
-    getUserDetails,
-  } = useMember();
   const { mutate: globalMutate } = useSWRConfig();
   const isEnabled = !!getProjectById(projectId)?.is_issue_type_enabled;
   const typeId = getIssueById(issueId)?.type_id ?? "default";
@@ -127,11 +155,6 @@ export const IssueCustomProperties = observer(function IssueCustomProperties(pro
   );
 
   if (!isEnabled || !data || data.properties.length === 0) return null;
-
-  const memberOptions = (projectMemberIds ?? []).map((memberId) => ({
-    id: memberId,
-    name: getUserDetails(memberId)?.display_name ?? memberId,
-  }));
 
   const handleChange = async (property: TCustomProperty, value: TCustomPropertyValue) => {
     try {
@@ -153,7 +176,7 @@ export const IssueCustomProperties = observer(function IssueCustomProperties(pro
             property={property}
             value={data.values[property.id]}
             disabled={disabled}
-            memberOptions={memberOptions}
+            projectId={projectId}
             onChange={(value) => handleChange(property, value)}
           />
         </SidebarPropertyListItem>
