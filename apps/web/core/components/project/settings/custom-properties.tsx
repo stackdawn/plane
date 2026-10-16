@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import useSWR from "swr";
 // plane imports
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
-import type { TCustomPropertyType } from "@plane/types";
+import type { TCustomProperty, TCustomPropertyType } from "@plane/types";
 // hooks
 import { useProjectIssueTypes } from "@/hooks/use-project-issue-types";
 import { customPropertyService } from "@/services/issue/custom_property.service";
@@ -30,6 +30,95 @@ const TYPE_LABELS: Record<TCustomPropertyType, string> = {
 
 const FIELD_CLASS = "rounded-md border border-subtle bg-transparent px-3 py-1.5 text-body-sm-regular text-primary";
 
+type TEditFormProps = {
+  property: TCustomProperty;
+  onCancel: () => void;
+  onSave: (payload: { name: string; options?: { id?: string; name: string }[] }) => Promise<void>;
+};
+
+/** Rename a property and edit its options in place; option ids are kept so stored values survive a rename. */
+function CustomPropertyEditForm({ property, onCancel, onSave }: TEditFormProps) {
+  const hasOptions = property.property_type === "select" || property.property_type === "multi_select";
+  const [name, setName] = useState(property.name);
+  const [options, setOptions] = useState<{ id?: string; name: string }[]>(
+    property.options.map((option) => ({ id: option.id, name: option.name }))
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const cleanOptions = options
+    .map((option) => ({ ...option, name: option.name.trim() }))
+    .filter((option) => option.name);
+  const canSave = !!name.trim() && (!hasOptions || cleanOptions.length > 0);
+
+  return (
+    <div className="mt-1 mb-2 flex flex-col gap-2 rounded-md border border-subtle p-3">
+      <input
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        maxLength={255}
+        aria-label="Property name"
+        className={FIELD_CLASS}
+      />
+      {hasOptions && (
+        <div className="flex flex-col gap-1.5">
+          <div className="text-caption-md-medium text-secondary">Options (removing one clears it from work items)</div>
+          {options.map((option, index) => (
+            <div key={option.id ?? `new-${index}`} className="flex items-center gap-2">
+              <input
+                value={option.name}
+                onChange={(event) =>
+                  setOptions((current) =>
+                    current.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, name: event.target.value } : item
+                    )
+                  )
+                }
+                aria-label={`Option ${index + 1}`}
+                className={`${FIELD_CLASS} flex-1`}
+              />
+              <button
+                type="button"
+                className="text-caption-md-medium text-danger-primary"
+                onClick={() => setOptions((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <div>
+            <button
+              type="button"
+              className="text-caption-md-medium text-secondary"
+              onClick={() => setOptions((current) => [...current, { name: "" }])}
+            >
+              + Add option
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          disabled={!canSave || isSaving}
+          onClick={async () => {
+            setIsSaving(true);
+            try {
+              await onSave({ name: name.trim(), options: hasOptions ? cleanOptions : undefined });
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+          className="rounded-md bg-accent-primary px-3 py-1.5 text-body-sm-medium text-on-color disabled:opacity-50"
+        >
+          Save
+        </button>
+        <button type="button" className="text-caption-md-medium text-secondary" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Define custom properties (text, number, person, select, multi-select) for the project's work items. */
 export const CustomPropertiesSettings = observer(function CustomPropertiesSettings(props: Props) {
   const { workspaceSlug, projectId, isAdmin } = props;
@@ -39,6 +128,7 @@ export const CustomPropertiesSettings = observer(function CustomPropertiesSettin
   const [isMulti, setIsMulti] = useState(false);
   const [optionsText, setOptionsText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { issueTypes } = useProjectIssueTypes(workspaceSlug, projectId, true);
   const { data: properties = [], mutate } = useSWR(
     `PROJECT_CUSTOM_PROPERTIES_${workspaceSlug}_${projectId}`,
@@ -86,6 +176,19 @@ export const CustomPropertiesSettings = observer(function CustomPropertiesSettin
     }
   };
 
+  const handleUpdate = async (
+    propertyId: string,
+    payload: { name: string; options?: { id?: string; name: string }[] }
+  ) => {
+    try {
+      await customPropertyService.update(workspaceSlug, projectId, propertyId, payload);
+      setEditingId(null);
+      await mutate();
+    } catch (error) {
+      showError(error, "Could not save the property.");
+    }
+  };
+
   const handleDelete = async (propertyId: string) => {
     if (!window.confirm("Delete this property and every value stored for it?")) return;
     try {
@@ -105,30 +208,45 @@ export const CustomPropertiesSettings = observer(function CustomPropertiesSettin
       <ul className="mt-3 flex flex-col gap-y-1.5">
         {properties.length === 0 && <li className="text-caption-md-regular text-tertiary">No properties yet.</li>}
         {properties.map((property) => (
-          <li
-            key={property.id}
-            className="flex items-center justify-between rounded-md bg-layer-1 px-3 py-2 text-body-sm-regular text-primary"
-          >
-            <span>
-              {property.name}
-              <span className="ml-2 text-caption-sm-regular text-tertiary">
-                {TYPE_LABELS[property.property_type]}
-                {property.property_type === "person" && property.is_multi ? " (several people)" : ""}
-                {" - "}
-                {property.issue_type
-                  ? (issueTypes.find((type) => type.id === property.issue_type)?.name ?? "one type")
-                  : "all types"}
-                {property.options.length > 0 ? ` - ${property.options.map((option) => option.name).join(", ")}` : ""}
+          <li key={property.id}>
+            <div className="flex items-center justify-between rounded-md bg-layer-1 px-3 py-2 text-body-sm-regular text-primary">
+              <span>
+                {property.name}
+                <span className="ml-2 text-caption-sm-regular text-tertiary">
+                  {TYPE_LABELS[property.property_type]}
+                  {property.property_type === "person" && property.is_multi ? " (several people)" : ""}
+                  {" - "}
+                  {property.issue_type
+                    ? (issueTypes.find((type) => type.id === property.issue_type)?.name ?? "one type")
+                    : "all types"}
+                  {property.options.length > 0 ? ` - ${property.options.map((option) => option.name).join(", ")}` : ""}
+                </span>
               </span>
-            </span>
-            {isAdmin && (
-              <button
-                type="button"
-                className="text-caption-md-medium text-danger-primary"
-                onClick={() => handleDelete(property.id)}
-              >
-                Delete
-              </button>
+              {isAdmin && (
+                <span className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    className="text-caption-md-medium text-secondary"
+                    onClick={() => setEditingId(editingId === property.id ? null : property.id)}
+                  >
+                    {editingId === property.id ? "Close" : "Edit"}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-caption-md-medium text-danger-primary"
+                    onClick={() => handleDelete(property.id)}
+                  >
+                    Delete
+                  </button>
+                </span>
+              )}
+            </div>
+            {isAdmin && editingId === property.id && (
+              <CustomPropertyEditForm
+                property={property}
+                onCancel={() => setEditingId(null)}
+                onSave={(payload) => handleUpdate(property.id, payload)}
+              />
             )}
           </li>
         ))}

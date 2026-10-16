@@ -82,29 +82,58 @@ class CustomPropertyViewSet(BaseViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def _value_from_rows(prop, stored):
+    """Collapse the stored rows of one property into its API value (scalar, list, or None)."""
+    if prop.property_type == PropertyType.TEXT:
+        return stored[0].value_text if stored else None
+    if prop.property_type == PropertyType.NUMBER:
+        return float(stored[0].value_number) if stored and stored[0].value_number is not None else None
+    if prop.property_type == PropertyType.PERSON:
+        ids = [str(r.value_user_id) for r in stored if r.value_user_id]
+        return ids if prop.is_multi else (ids[0] if ids else None)
+    if prop.property_type == PropertyType.SELECT:
+        ids = [str(r.value_option_id) for r in stored if r.value_option_id]
+        return ids[0] if ids else None
+    return [str(r.value_option_id) for r in stored if r.value_option_id]
+
+
 def _read_values(issue, properties):
     """{property_id: value}. Single values are scalars, multi values are lists, empty is None."""
     rows = {}
     for row in CustomPropertyValue.objects.filter(issue=issue):
         rows.setdefault(row.custom_property_id, []).append(row)
-    result = {}
-    for prop in properties:
-        stored = rows.get(prop.id, [])
-        if prop.property_type == PropertyType.TEXT:
-            result[str(prop.id)] = stored[0].value_text if stored else None
-        elif prop.property_type == PropertyType.NUMBER:
-            result[str(prop.id)] = (
-                float(stored[0].value_number) if stored and stored[0].value_number is not None else None
+    return {str(prop.id): _value_from_rows(prop, rows.get(prop.id, [])) for prop in properties}
+
+
+MAX_BULK_ROWS = 5000
+
+
+class ProjectCustomPropertyValuesEndpoint(BaseAPIView):
+    """All custom property values of a project in one call, for board cards and lists."""
+
+    permission_classes = [ProjectBasePermission]
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def get(self, request, slug, project_id):
+        properties = list(
+            CustomProperty.objects.filter(project_id=project_id, workspace__slug=slug, is_active=True).prefetch_related(
+                "options"
             )
-        elif prop.property_type == PropertyType.PERSON:
-            ids = [str(r.value_user_id) for r in stored if r.value_user_id]
-            result[str(prop.id)] = ids if prop.is_multi else (ids[0] if ids else None)
-        elif prop.property_type == PropertyType.SELECT:
-            ids = [str(r.value_option_id) for r in stored if r.value_option_id]
-            result[str(prop.id)] = ids[0] if ids else None
-        else:
-            result[str(prop.id)] = [str(r.value_option_id) for r in stored if r.value_option_id]
-    return result
+        )
+        by_property = {prop.id: prop for prop in properties}
+        grouped = {}
+        rows = CustomPropertyValue.objects.filter(
+            project_id=project_id, custom_property_id__in=by_property.keys(), issue__deleted_at__isnull=True
+        ).order_by("created_at")[:MAX_BULK_ROWS]
+        for row in rows:
+            grouped.setdefault(row.issue_id, {}).setdefault(row.custom_property_id, []).append(row)
+        values = {
+            str(issue_id): {
+                str(prop_id): _value_from_rows(by_property[prop_id], stored) for prop_id, stored in per_prop.items()
+            }
+            for issue_id, per_prop in grouped.items()
+        }
+        return Response({"properties": CustomPropertySerializer(properties, many=True).data, "values": values})
 
 
 class IssueCustomPropertyValueEndpoint(BaseAPIView):

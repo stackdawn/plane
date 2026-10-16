@@ -25,6 +25,7 @@ import { cn, generateWorkItemLink } from "@plane/utils";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 import { HIGHLIGHT_CLASS, getIssueBlockId } from "@/components/issues/issue-layouts/utils";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
+import { CustomPropertyChips } from "../custom-property-chips";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
@@ -109,6 +110,8 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
         isReadOnly={isReadOnly}
         isEpic={isEpic}
       />
+
+      {issue.project_id && <CustomPropertyChips projectId={issue.project_id} issueId={issue.id} />}
 
       {/* Jira-style footer: type icon and key at the bottom of the card */}
       <div className="relative mt-2 flex min-h-5 items-center">

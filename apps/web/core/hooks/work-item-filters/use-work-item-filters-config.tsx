@@ -18,6 +18,7 @@ import {
   StateGroupIcon,
   MembersPropertyIcon,
   LabelPropertyIcon,
+  ViewsIcon,
   StartDatePropertyIcon,
   DueDatePropertyIcon,
   UserCirclePropertyIcon,
@@ -39,6 +40,7 @@ import {
   getCreatedAtFilterConfig,
   getCreatedByFilterConfig,
   getCycleFilterConfig,
+  getIssueTypeFilterConfig,
   getFileURL,
   getLabelFilterConfig,
   getMentionFilterConfig,
@@ -54,6 +56,8 @@ import {
   isLoaderReady,
 } from "@plane/utils";
 // store hooks
+import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
+import { useProjectIssueTypes } from "@/hooks/use-project-issue-types";
 import { useCycle } from "@/hooks/store/use-cycle";
 import { useLabel } from "@/hooks/store/use-label";
 import { useMember } from "@/hooks/store/use-member";
@@ -137,6 +141,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         : [],
     [projectIds, getProjectById]
   );
+  const { issueTypes } = useProjectIssueTypes(workspaceSlug, projectId, !!project?.is_issue_type_enabled);
   const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
 
   /**
@@ -170,6 +175,19 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         ...operatorConfigs,
       }),
     [isFilterEnabled, workItemStates, operatorConfigs]
+  );
+
+  // work item type filter config
+  const issueTypeFilterConfig = useMemo(
+    () =>
+      getIssueTypeFilterConfig<TWorkItemFilterProperty>("type_id")({
+        isEnabled: isFilterEnabled("type_id") && project?.is_issue_type_enabled === true && issueTypes.length > 0,
+        filterIcon: ViewsIcon,
+        issueTypes,
+        getOptionIcon: (issueType) => <IssueTypeIcon issueType={issueType} size={14} />,
+        ...operatorConfigs,
+      }),
+    [isFilterEnabled, project?.is_issue_type_enabled, issueTypes, operatorConfigs]
   );
 
   // label filter config
@@ -372,6 +390,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       projectFilterConfig,
       mentionFilterConfig,
       labelFilterConfig,
+      issueTypeFilterConfig,
       cycleFilterConfig,
       moduleFilterConfig,
       startDateFilterConfig,
@@ -386,6 +405,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       state_group: stateGroupFilterConfig,
       state_id: stateFilterConfig,
       label_id: labelFilterConfig,
+      type_id: issueTypeFilterConfig,
       cycle_id: cycleFilterConfig,
       module_id: moduleFilterConfig,
       assignee_id: assigneeFilterConfig,

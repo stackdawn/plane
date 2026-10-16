@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { SlidersHorizontal } from "lucide-react";
 // plane imports
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
@@ -29,7 +29,7 @@ type Props = {
 const FIELD_CLASS =
   "w-full rounded-md border border-subtle bg-transparent px-2 py-1 text-body-xs-regular text-primary disabled:opacity-60";
 
-type TEditorProps = {
+export type TEditorProps = {
   property: TCustomProperty;
   value: TCustomPropertyValue | undefined;
   disabled: boolean;
@@ -37,7 +37,7 @@ type TEditorProps = {
   onChange: (value: TCustomPropertyValue) => void;
 };
 
-function PropertyEditor({ property, value, disabled, memberOptions, onChange }: TEditorProps) {
+export function PropertyEditor({ property, value, disabled, memberOptions, onChange }: TEditorProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const asList = Array.isArray(value) ? value : value ? [String(value)] : [];
 
@@ -117,6 +117,7 @@ export const IssueCustomProperties = observer(function IssueCustomProperties(pro
     project: { projectMemberIds },
     getUserDetails,
   } = useMember();
+  const { mutate: globalMutate } = useSWRConfig();
   const isEnabled = !!getProjectById(projectId)?.is_issue_type_enabled;
   const typeId = getIssueById(issueId)?.type_id ?? "default";
   const { data, mutate } = useSWR(
@@ -137,6 +138,7 @@ export const IssueCustomProperties = observer(function IssueCustomProperties(pro
       await mutate(customPropertyService.setValues(workspaceSlug, projectId, issueId, { [property.id]: value }), {
         revalidate: false,
       });
+      void globalMutate(`PROJECT_CUSTOM_VALUES_${workspaceSlug}_${projectId}`);
     } catch (error) {
       const message = Object.values((error ?? {}) as Record<string, string>)[0];
       setToast({ type: TOAST_TYPE.ERROR, title: "Error!", message: message ?? "Could not save the property." });

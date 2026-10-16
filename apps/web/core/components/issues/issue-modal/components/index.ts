@@ -10,3 +10,4 @@ export * from "./title-input";
 export * from "./description-editor";
 export * from "./default-properties";
 export * from "./type-select";
+export * from "./custom-properties";

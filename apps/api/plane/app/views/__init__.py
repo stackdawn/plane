@@ -144,7 +144,11 @@ from .issue.label import LabelViewSet, BulkCreateIssueLabelsEndpoint
 
 from .issue.type import IssueTypeViewSet
 
-from .issue.custom_property import CustomPropertyViewSet, IssueCustomPropertyValueEndpoint
+from .issue.custom_property import (
+    CustomPropertyViewSet,
+    IssueCustomPropertyValueEndpoint,
+    ProjectCustomPropertyValuesEndpoint,
+)
 
 from .issue.link import IssueLinkViewSet
 

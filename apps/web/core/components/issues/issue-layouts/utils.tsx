@@ -48,6 +48,8 @@ import type {
 import { EIssuesStoreType } from "@plane/types";
 // plane ui
 import { Avatar } from "@plane/ui";
+import { IssueTypeIcon } from "@/components/issues/issue-type-icon";
+import { getCachedIssueTypes } from "@/store/issue-type-cache";
 import { renderFormattedDate, getFileURL } from "@plane/utils";
 // store
 import { store } from "@/lib/store-context";
@@ -151,6 +153,7 @@ export const getGroupByColumns = ({
     labels: getLabelsColumns,
     assignees: getAssigneeColumns,
     created_by: getCreatedByColumns,
+    issue_type: getIssueTypeColumns,
     team_project: getTeamProjectColumns,
   };
 
@@ -323,6 +326,23 @@ const getAssigneeColumns = ({ isWorkspaceLevel, projectId }: TGetColumns): IGrou
   }
 
   return assigneeColumns;
+};
+
+const getIssueTypeColumns = ({ projectId }: TGetColumns): IGroupByColumn[] | undefined => {
+  const project = store.projectRoot.project.currentProjectDetails;
+  const currentProjectId = projectId ?? project?.id;
+  if (!currentProjectId) return;
+  const issueTypes = getCachedIssueTypes(store.router.workspaceSlug, currentProjectId);
+  // types not loaded yet: the cache is observable, so the board re-renders when they arrive
+  if (!issueTypes) return;
+  const columns: IGroupByColumn[] = issueTypes.map((issueType) => ({
+    id: issueType.id,
+    name: issueType.name,
+    icon: <IssueTypeIcon issueType={issueType} size={14} />,
+    payload: { type_id: issueType.id },
+  }));
+  columns.push({ id: "None", name: "No type", icon: undefined, payload: { type_id: null } });
+  return columns;
 };
 
 const getCreatedByColumns = (): IGroupByColumn[] | undefined => {

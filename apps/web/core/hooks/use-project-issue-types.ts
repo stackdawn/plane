@@ -8,6 +8,7 @@ import useSWR from "swr";
 // plane imports
 import type { TIssueType } from "@plane/types";
 // services
+import { setCachedIssueTypes } from "@/store/issue-type-cache";
 import { issueTypeService } from "@/services/issue/issue_type.service";
 
 export const PROJECT_ISSUE_TYPES_KEY = (workspaceSlug: string, projectId: string) =>
@@ -22,7 +23,11 @@ export const useProjectIssueTypes = (
   const shouldFetch = Boolean(workspaceSlug && projectId && isEnabled);
   const { data, mutate, isLoading } = useSWR<TIssueType[]>(
     shouldFetch ? PROJECT_ISSUE_TYPES_KEY(workspaceSlug as string, projectId as string) : null,
-    () => issueTypeService.list(workspaceSlug as string, projectId as string),
+    () =>
+      issueTypeService.list(workspaceSlug as string, projectId as string).then((types) => {
+        setCachedIssueTypes(projectId as string, types);
+        return types;
+      }),
     { revalidateOnFocus: false }
   );
   const issueTypes = data ?? [];

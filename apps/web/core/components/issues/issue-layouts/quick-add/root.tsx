@@ -10,6 +10,7 @@ import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import type { UseFormRegister } from "react-hook-form";
 import { useForm } from "react-hook-form";
+import { getQuickAddTypeId } from "@/store/quick-add-type";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { PlusIcon } from "@plane/propel/icons";
@@ -102,7 +103,10 @@ export const QuickAddIssueRoot = observer(function QuickAddIssueRoot(props: TQui
 
     reset({ ...defaultValues });
 
+    const quickAddTypeId = getQuickAddTypeId(projectId.toString());
     const payload = createIssuePayload(projectId.toString(), {
+      // the quick-add type picker, unless the column already decides the type (group by type)
+      ...(quickAddTypeId && !isEpic ? { type_id: quickAddTypeId } : {}),
       // oxlint-disable-next-line unicorn/no-useless-fallback-in-spread
       ...(prePopulatedData ?? {}),
       ...formData,

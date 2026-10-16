@@ -16,6 +16,7 @@ export type TIssueGroupByOptions =
   | "priority"
   | "labels"
   | "created_by"
+  | "issue_type"
   | "state_detail.group"
   | "project"
   | "assignees"
@@ -103,6 +104,7 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "created_by_id",
   "subscriber_id",
   "label_id",
+  "type_id",
   "state_id",
   "cycle_id",
   "module_id",

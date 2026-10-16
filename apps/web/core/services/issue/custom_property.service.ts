@@ -68,6 +68,17 @@ export class CustomPropertyService extends APIService {
       });
   }
 
+  async getProjectValues(
+    workspaceSlug: string,
+    projectId: string
+  ): Promise<{ properties: TCustomProperty[]; values: Record<string, Record<string, TCustomPropertyValue>> }> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-property-values/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
   async setValues(
     workspaceSlug: string,
     projectId: string,

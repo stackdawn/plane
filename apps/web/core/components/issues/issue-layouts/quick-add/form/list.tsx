@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import type { TQuickAddIssueForm } from "../root";
+import { QuickAddTypePicker } from "../type-picker";
 
 export const ListQuickAddIssueForm = observer(function ListQuickAddIssueForm(props: TQuickAddIssueForm) {
   const { ref, projectDetail, register, onSubmit, isEpic } = props;
@@ -19,6 +20,7 @@ export const ListQuickAddIssueForm = observer(function ListQuickAddIssueForm(pro
         className="flex w-full items-center gap-x-3 border-[0.5px] border-t-0 border-subtle bg-surface-1 px-3"
       >
         <div className="flex w-full items-center gap-3">
+          <QuickAddTypePicker projectId={projectDetail.id} />
           <div className="text-11 font-medium text-placeholder">{projectDetail?.identifier ?? "..."}</div>
           <input
             type="text"

@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import type { TQuickAddIssueForm } from "../root";
+import { QuickAddTypePicker } from "../type-picker";
 
 export const SpreadsheetQuickAddIssueForm = observer(function SpreadsheetQuickAddIssueForm(props: TQuickAddIssueForm) {
   const { ref, projectDetail, register, onSubmit, isEpic } = props;
@@ -18,7 +19,10 @@ export const SpreadsheetQuickAddIssueForm = observer(function SpreadsheetQuickAd
         onSubmit={onSubmit}
         className="z-10 flex items-center gap-x-5 border-[0.5px] border-t-0 border-subtle bg-surface-1 px-4 shadow-raised-200"
       >
-        <h4 className="w-20 text-11 leading-5 text-placeholder">{projectDetail?.identifier ?? "..."}</h4>
+        <div className="flex w-20 items-center gap-1">
+          <QuickAddTypePicker projectId={projectDetail.id} />
+          <h4 className="text-11 leading-5 text-placeholder">{projectDetail?.identifier ?? "..."}</h4>
+        </div>
         <input
           type="text"
           autoComplete="off"

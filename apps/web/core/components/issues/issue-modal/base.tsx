@@ -28,6 +28,7 @@ import { FileService } from "@/services/file.service";
 const fileService = new FileService();
 // local imports
 import { CreateIssueToastActionItems } from "../create-issue-toast-action-items";
+import { flushPendingCustomValues } from "@/store/pending-custom-values";
 import { DraftIssueLayout } from "./draft-issue-layout";
 import { IssueFormRoot } from "./form";
 import type { IssueFormProps } from "./form";
@@ -196,6 +197,17 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       }
 
       if (!response) throw new Error();
+
+      // save custom property values typed into the modal (the work item exists now)
+      if (!is_draft_issue && response.project_id) {
+        await flushPendingCustomValues(workspaceSlug?.toString() ?? "", response.project_id, response.id).catch(() =>
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: "Some properties were not saved",
+            message: "The work item was created. Set the custom properties again from its sidebar.",
+          })
+        );
+      }
 
       // check if we should add issue to cycle/module
       if (!is_draft_issue) {

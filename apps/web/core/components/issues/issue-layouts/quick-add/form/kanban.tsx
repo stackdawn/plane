@@ -7,6 +7,7 @@
 import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import type { TQuickAddIssueForm } from "../root";
+import { QuickAddTypePicker } from "../type-picker";
 
 export const KanbanQuickAddIssueForm = observer(function KanbanQuickAddIssueForm(props: TQuickAddIssueForm) {
   const { ref, projectDetail, register, onSubmit, isEpic } = props;
@@ -15,7 +16,10 @@ export const KanbanQuickAddIssueForm = observer(function KanbanQuickAddIssueForm
     <div className="m-1 overflow-hidden rounded-sm bg-layer-2 shadow-raised-200">
       <form ref={ref} onSubmit={onSubmit} className="flex w-full items-center gap-x-3 p-3">
         <div className="w-full">
-          <h4 className="text-11 leading-5 font-medium text-tertiary">{projectDetail?.identifier ?? "..."}</h4>
+          <div className="flex items-center gap-1">
+            <QuickAddTypePicker projectId={projectDetail.id} />
+            <h4 className="text-11 leading-5 font-medium text-tertiary">{projectDetail?.identifier ?? "..."}</h4>
+          </div>
           <input
             autoComplete="off"
             placeholder={isEpic ? t("epic.title.label") : t("issue.title.label")}

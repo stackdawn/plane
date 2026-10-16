@@ -134,6 +134,20 @@ class TestCustomPropertyValues:
         assert cleared["values"][text["id"]] is None
 
     @pytest.mark.django_db
+    def test_project_wide_values_for_cards(self, session_client, workspace, project, issue):
+        text = _create(session_client, workspace, project, name="QA Assistant", property_type="text").json()
+        session_client.patch(
+            _values(workspace.slug, project.id, issue.id), {"values": {text["id"]: "Priya"}}, format="json"
+        )
+
+        response = session_client.get(f"/api/workspaces/{workspace.slug}/projects/{project.id}/custom-property-values/")
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert [p["name"] for p in body["properties"]] == ["QA Assistant"]
+        assert body["values"][str(issue.id)] == {text["id"]: "Priya"}
+
+    @pytest.mark.django_db
     def test_invalid_values_are_rejected(self, session_client, workspace, project, issue):
         number = _create(session_client, workspace, project, name="Points", property_type="number").json()
         person = _create(session_client, workspace, project, name="Owner", property_type="person").json()
