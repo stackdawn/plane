@@ -21,6 +21,7 @@ import type { Route } from "./+types/page";
 import { FeaturesWorkItemTypesProjectSettingsHeader } from "./header";
 import { SettingsHeading } from "@/components/settings/heading";
 import { WorkItemTypesSettings } from "@/components/project/settings/work-item-types";
+import { CardStyleSettings } from "@/components/project/settings/card-style";
 import { CustomPropertiesSettings } from "@/components/project/settings/custom-properties";
 
 function FeaturesWorkItemTypesSettingsPage({ params }: Route.ComponentProps) {
@@ -60,6 +61,11 @@ function FeaturesWorkItemTypesSettingsPage({ params }: Route.ComponentProps) {
           {currentProjectDetails?.is_issue_type_enabled && (
             <>
               <WorkItemTypesSettings
+                workspaceSlug={workspaceSlug}
+                projectId={projectId}
+                isAdmin={canPerformProjectAdminActions}
+              />
+              <CardStyleSettings
                 workspaceSlug={workspaceSlug}
                 projectId={projectId}
                 isAdmin={canPerformProjectAdminActions}

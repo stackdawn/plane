@@ -5,6 +5,7 @@
  */
 
 import type { TLogoProps } from "../common";
+import type { TIssueTypeCardStyle } from "../issues/issue-type";
 import type { TUserPermissions } from "../enums";
 import type { TStateGroups } from "../state";
 import type { IUser, IUserLite } from "../users";
@@ -27,6 +28,7 @@ export interface IPartialProject {
   workspace: IWorkspace | string;
   cycle_view: boolean;
   is_issue_type_enabled: boolean;
+  issue_type_card_style: TIssueTypeCardStyle;
   issue_views_view: boolean;
   module_view: boolean;
   page_view: boolean;

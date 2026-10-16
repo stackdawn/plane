@@ -16,7 +16,7 @@ import { useOutsideClickDetector } from "@plane/hooks";
 // types
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
-import type { TIssue, IIssueDisplayProperties, IIssueMap } from "@plane/types";
+import type { TIssue, TIssueType, IIssueDisplayProperties, IIssueMap } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 // ui
 import { ControlLink, DropIndicator } from "@plane/ui";
@@ -26,6 +26,8 @@ import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 import { HIGHLIGHT_CLASS, getIssueBlockId } from "@/components/issues/issue-layouts/utils";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
 import { CustomPropertyChips } from "../custom-property-chips";
+import { ISSUE_TYPE_GLYPHS, IssueTypeIcon, getIssueTypeVisual } from "@/components/issues/issue-type-icon";
+import { useIssueTypeCardStyle } from "@/hooks/use-issue-type-card-style";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
@@ -63,6 +65,14 @@ interface IssueDetailsBlockProps {
   isEpic?: boolean;
 }
 
+/** White glyph (or the uploaded image) for the side-gutter style. */
+function GutterGlyph({ issueType }: { issueType: TIssueType }) {
+  const { glyph, image } = getIssueTypeVisual(issueType);
+  if (image) return <IssueTypeIcon issueType={issueType} size={22} />;
+  const { Icon } = ISSUE_TYPE_GLYPHS[glyph];
+  return <Icon size={20} strokeWidth={2.25} />;
+}
+
 const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props: IssueDetailsBlockProps) {
   const { cardRef, issue, updateIssue, quickActions, isReadOnly, displayProperties, isEpic = false } = props;
   // refs
@@ -71,6 +81,10 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
   const [isMenuActive, setIsMenuActive] = useState(false);
   // hooks
   const { isMobile } = usePlatformOS();
+  const { project_id: issueProjectId } = issue;
+  const { getProjectIdentifierById } = useProject();
+  const { style: cardStyle, color: typeColor, issueType } = useIssueTypeCardStyle(issue);
+  const issueKey = `${issueProjectId ? getProjectIdentifierById(issueProjectId) : ""}-${issue.sequence_id}`;
 
   const customActionButton = (
     // oxlint-disable-next-line jsx_a11y/click-events-have-key-events oxlint-disable-next-line jsx_a11y/no-static-element-interactions
@@ -95,49 +109,123 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
 
   return (
     <>
-      <Tooltip tooltipContent={issue.name} isMobile={isMobile} renderByDefault={false}>
-        <div className="line-clamp-2 w-full text-body-sm-medium text-primary">
-          <span>{issue.name}</span>
-        </div>
-      </Tooltip>
-
-      <IssueProperties
-        className="flex flex-wrap items-center gap-2 pt-1.5 whitespace-nowrap text-tertiary"
-        issue={issue}
-        displayProperties={displayProperties}
-        activeLayout="Kanban"
-        updateIssue={updateIssue}
-        isReadOnly={isReadOnly}
-        isEpic={isEpic}
-      />
-
-      {issue.project_id && <CustomPropertyChips projectId={issue.project_id} issueId={issue.id} />}
-
-      {/* Jira-style footer: type icon and key at the bottom of the card */}
-      <div className="relative mt-2 flex min-h-5 items-center">
-        {issue.project_id && (
-          <IssueIdentifier
-            issueId={issue.id}
-            projectId={issue.project_id}
-            size="xs"
-            variant="tertiary"
-            displayProperties={displayProperties}
-          />
-        )}
-        {/* oxlint-disable-next-line jsx_a11y/click-events-have-key-events oxlint-disable-next-line jsx_a11y/no-static-element-interactions */}
+      {cardStyle === "edge" && (
+        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5" style={{ backgroundColor: typeColor }} />
+      )}
+      {cardStyle === "tint" && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-lg border"
+          style={{ backgroundColor: `${typeColor}1F`, borderColor: `${typeColor}66` }}
+        />
+      )}
+      {cardStyle === "gutter" && issueType && (
         <div
-          className={cn("absolute -top-1 right-0", {
+          className="absolute inset-y-0 left-0 flex w-20 flex-col justify-between p-2 text-11 font-medium text-white"
+          style={{ backgroundColor: typeColor }}
+        >
+          <GutterGlyph issueType={issueType} />
+          <div>
+            <div className="truncate">{issueType.name}</div>
+            <div className="font-normal opacity-90">{issueKey}</div>
+          </div>
+        </div>
+      )}
+      {cardStyle === "gutter" && (
+        <div
+          className={cn("absolute top-1 right-1 z-[1] rounded-sm bg-layer-2", {
             "hidden group-hover/kanban-block:block": !isMobile,
             "!block": isMenuActive,
           })}
           onClick={handleEventPropagation}
         >
-          {quickActions({
-            issue,
-            parentRef: cardRef,
-            customActionButton,
-          })}
+          {quickActions({ issue, parentRef: cardRef, customActionButton })}
         </div>
+      )}
+      {cardStyle === "header" && issueType && (
+        <div
+          className="relative -mx-3 -mt-3 mb-2 flex items-center justify-between px-3 py-1.5 text-11 font-medium text-white"
+          style={{ backgroundColor: typeColor }}
+        >
+          <span>{issueType.name}</span>
+          <span className="flex items-center gap-2">
+            <span>{issueKey}</span>
+          </span>
+          <div
+            className={cn("absolute top-0.5 right-1 rounded-sm bg-black/20", {
+              "hidden group-hover/kanban-block:block": !isMobile,
+              "!block": isMenuActive,
+            })}
+            onClick={handleEventPropagation}
+          >
+            {quickActions({ issue, parentRef: cardRef, customActionButton })}
+          </div>
+        </div>
+      )}
+      <div className={cn({ "ml-[4.75rem]": cardStyle === "gutter", "pl-1.5": cardStyle === "edge" })}>
+        <Tooltip tooltipContent={issue.name} isMobile={isMobile} renderByDefault={false}>
+          <div className="line-clamp-2 w-full text-body-sm-medium text-primary">
+            <span>{issue.name}</span>
+          </div>
+        </Tooltip>
+
+        <IssueProperties
+          className="flex flex-wrap items-center gap-2 pt-1.5 whitespace-nowrap text-tertiary"
+          issue={issue}
+          displayProperties={displayProperties}
+          activeLayout="Kanban"
+          updateIssue={updateIssue}
+          isReadOnly={isReadOnly}
+          isEpic={isEpic}
+        />
+
+        {issue.project_id && <CustomPropertyChips projectId={issue.project_id} issueId={issue.id} />}
+
+        {cardStyle === "footer" && issueType ? (
+          <div
+            className="relative -mx-3 mt-2 -mb-3 flex items-center gap-2 border-t px-3 py-1.5 text-11"
+            style={{ backgroundColor: `${typeColor}26`, borderColor: `${typeColor}66` }}
+          >
+            <IssueTypeIcon issueType={issueType} size={14} />
+            <span className="font-medium text-primary">{issueType.name}</span>
+            <span className="ml-auto text-secondary">{issueKey}</span>
+            <div
+              className={cn("absolute top-1 right-2 rounded-sm bg-layer-2", {
+                "hidden group-hover/kanban-block:block": !isMobile,
+                "!block": isMenuActive,
+              })}
+              onClick={handleEventPropagation}
+            >
+              {quickActions({ issue, parentRef: cardRef, customActionButton })}
+            </div>
+          </div>
+        ) : cardStyle === "header" || cardStyle === "gutter" ? null : (
+          <div className="relative mt-2 flex min-h-5 items-center">
+            {issue.project_id && (
+              <IssueIdentifier
+                issueId={issue.id}
+                projectId={issue.project_id}
+                size="xs"
+                variant="tertiary"
+                displayProperties={displayProperties}
+              />
+            )}
+            {/* oxlint-disable-next-line jsx_a11y/click-events-have-key-events oxlint-disable-next-line jsx_a11y/no-static-element-interactions */}
+            <div
+              className={cn("absolute -top-1 right-0", {
+                "hidden group-hover/kanban-block:block": !isMobile,
+                "!block": isMenuActive,
+              })}
+              onClick={handleEventPropagation}
+            >
+              {quickActions({
+                issue,
+                parentRef: cardRef,
+                customActionButton,
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
@@ -266,7 +354,7 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
           href={workItemLink}
           ref={cardRef}
           className={cn(
-            "block w-full rounded-lg border border-subtle bg-layer-2 p-3 text-13 shadow-raised-100 outline-[0.5px] outline-transparent transition-all hover:border-strong hover:shadow-raised-200",
+            "relative block w-full overflow-hidden rounded-lg border border-subtle bg-layer-2 p-3 text-13 shadow-raised-100 outline-[0.5px] outline-transparent transition-all hover:border-strong hover:shadow-raised-200",
             { "hover:cursor-pointer": isDragAllowed },
             { "border border-accent-strong hover:border-accent-strong": getIsIssuePeeked(issue.id) },
             { "z-[100] bg-layer-1": isCurrentBlockDragging }

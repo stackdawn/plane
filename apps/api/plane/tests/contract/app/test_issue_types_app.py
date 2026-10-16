@@ -126,3 +126,15 @@ class TestIssueTypes:
         ):
             response = session_client.patch(url, {"logo_props": bad}, format="json")
             assert response.status_code == status.HTTP_400_BAD_REQUEST, bad
+
+    @pytest.mark.django_db
+    def test_card_style_defaults_to_footer_and_validates(self, session_client, workspace, project):
+        url = f"/api/workspaces/{workspace.slug}/projects/{project.id}/"
+        assert session_client.get(url).json()["issue_type_card_style"] == "footer"
+
+        ok = session_client.patch(url, {"issue_type_card_style": "gutter"}, format="json")
+        assert ok.status_code == status.HTTP_200_OK
+        assert session_client.get(url).json()["issue_type_card_style"] == "gutter"
+
+        bad = session_client.patch(url, {"issue_type_card_style": "neon"}, format="json")
+        assert bad.status_code == status.HTTP_400_BAD_REQUEST

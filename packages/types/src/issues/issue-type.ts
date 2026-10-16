@@ -17,3 +17,5 @@ export type TIssueType = {
 };
 
 export type TIssueTypePayload = Partial<Pick<TIssueType, "name" | "description" | "is_active" | "logo_props">>;
+
+export type TIssueTypeCardStyle = "standard" | "edge" | "header" | "gutter" | "tint" | "footer";

@@ -97,6 +97,15 @@ class Project(BaseModel):
     intake_view = models.BooleanField(default=False)
     is_time_tracking_enabled = models.BooleanField(default=False)
     is_issue_type_enabled = models.BooleanField(default=False)
+    ISSUE_TYPE_CARD_STYLES = [
+        ("standard", "Standard"),
+        ("edge", "Edge bar"),
+        ("header", "Header band"),
+        ("gutter", "Side gutter"),
+        ("tint", "Soft tint"),
+        ("footer", "Footer band"),
+    ]
+    issue_type_card_style = models.CharField(max_length=20, choices=ISSUE_TYPE_CARD_STYLES, default="footer")
     guest_view_all_features = models.BooleanField(default=False)
     cover_image = models.TextField(blank=True, null=True)
     cover_image_asset = models.ForeignKey(
