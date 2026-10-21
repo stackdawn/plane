@@ -27,13 +27,14 @@ class TestIssueTypes:
     @pytest.mark.django_db
     def test_create_list_and_default(self, session_client, workspace, project):
         ensure_default_issue_type(project)
-        created = session_client.post(_url(workspace.slug, project.id), {"name": "Bug"}, format="json")
+        created = session_client.post(_url(workspace.slug, project.id), {"name": "Hotfix"}, format="json")
         assert created.status_code == status.HTTP_201_CREATED
 
         listed = session_client.get(_url(workspace.slug, project.id))
         assert listed.status_code == status.HTTP_200_OK
         names = [item["name"] for item in listed.json()]
-        assert names == ["Task", "Bug"]  # default first
+        # default first, then the standard set and the custom type by name
+        assert names == ["Task", "Bug", "Documentation", "Feature", "Hotfix", "KT or Setup", "Spike"]
 
     @pytest.mark.django_db
     def test_duplicate_name_rejected_case_insensitively(self, session_client, workspace, project):
@@ -148,6 +149,50 @@ class TestIssueTypes:
         response = session_client.get(_url(workspace.slug, project.id))
 
         assert response.status_code == status.HTTP_200_OK
-        assert [(t["name"], t["is_default"]) for t in response.json()] == [("Task", True)]
+        body = response.json()
+        assert (body[0]["name"], body[0]["is_default"]) == ("Task", True)
+        assert [t["name"] for t in body[1:]] == ["Bug", "Documentation", "Feature", "KT or Setup", "Spike"]
         # idempotent
-        assert len(session_client.get(_url(workspace.slug, project.id)).json()) == 1
+        assert len(session_client.get(_url(workspace.slug, project.id)).json()) == 6
+
+    @pytest.mark.django_db
+    def test_enabling_feature_creates_the_standard_set(self, session_client, workspace, project):
+        session_client.patch(
+            f"/api/workspaces/{workspace.slug}/projects/{project.id}/",
+            {"is_issue_type_enabled": True},
+            format="json",
+        )
+        names = sorted(IssueType.objects.filter(project_issue_types__project=project).values_list("name", flat=True))
+        assert names == ["Bug", "Documentation", "Feature", "KT or Setup", "Spike", "Task"]
+
+    @pytest.mark.django_db
+    def test_new_project_starts_with_types_enabled_and_the_standard_set(self, session_client, workspace):
+        response = session_client.post(
+            f"/api/workspaces/{workspace.slug}/projects/",
+            {"name": "Fresh", "identifier": "FRSH"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        body = response.json()
+        assert body["is_issue_type_enabled"] is True
+        types = session_client.get(f"/api/workspaces/{workspace.slug}/projects/{body['id']}/issue-types/").json()
+        assert [t["name"] for t in types] == ["Task", "Bug", "Documentation", "Feature", "KT or Setup", "Spike"]
+        assert types[0]["is_default"] is True
+
+        # an admin can still add custom types
+        custom = session_client.post(
+            f"/api/workspaces/{workspace.slug}/projects/{body['id']}/issue-types/", {"name": "Incident"}, format="json"
+        )
+        assert custom.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.django_db
+    def test_new_project_can_opt_out_of_types(self, session_client, workspace):
+        response = session_client.post(
+            f"/api/workspaces/{workspace.slug}/projects/",
+            {"name": "Plain", "identifier": "PLN", "is_issue_type_enabled": False},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        body = response.json()
+        assert body["is_issue_type_enabled"] is False
+        assert IssueType.objects.filter(project_issue_types__project_id=body["id"]).count() == 0

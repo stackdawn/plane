@@ -295,6 +295,12 @@ class ProjectViewSet(BaseViewSet):
                 ]
             )
 
+            # New projects start with work item types on and the standard set of types, unless the
+            # caller explicitly opts out with is_issue_type_enabled=false.
+            if str(request.data.get("is_issue_type_enabled", True)).lower() not in ("false", "0"):
+                Project.objects.filter(pk=serializer.instance.pk).update(is_issue_type_enabled=True)
+                ensure_default_issue_type(serializer.instance)
+
             project = self.get_queryset().filter(pk=serializer.data["id"]).first()
 
             # Create the model activity

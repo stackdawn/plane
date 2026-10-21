@@ -3,7 +3,7 @@
 # See the LICENSE file for details.
 
 # Django imports
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 
 # Module imports
@@ -56,10 +56,21 @@ class ProjectIssueType(ProjectBaseModel):
 
 
 DEFAULT_ISSUE_TYPE_NAME = "Task"
+DEFAULT_ISSUE_TYPE_LOGO = {"glyph": "check", "color": "#3E63DD"}
+
+# Created with every project's default type, so a new project starts with a useful set. Admins can
+# rename, recolour or delete any of them (except the default) and add their own.
+STANDARD_ISSUE_TYPES = [
+    {"name": "Bug", "description": "Something is broken", "glyph": "bug", "color": "#E5484D"},
+    {"name": "Documentation", "description": "Write or update documents", "glyph": "file", "color": "#8E4EC6"},
+    {"name": "Feature", "description": "New capability", "glyph": "layers", "color": "#30A46C"},
+    {"name": "KT or Setup", "description": "Knowledge transfer or setup", "glyph": "circle", "color": "#30A46C"},
+    {"name": "Spike", "description": "Time-boxed research", "glyph": "zap", "color": "#F76B15"},
+]
 
 
 def ensure_default_issue_type(project, created_by=None):
-    """Return the project's default work item type, creating it on first use.
+    """Return the project's default work item type, creating it (and the standard set) on first use.
 
     Types are stored workspace-wide in `issue_types` but this implementation
     keeps one set per project: every type is linked to exactly one project
@@ -69,16 +80,34 @@ def ensure_default_issue_type(project, created_by=None):
     if link:
         return link.issue_type
 
-    issue_type = IssueType.objects.create(
-        workspace_id=project.workspace_id,
-        name=DEFAULT_ISSUE_TYPE_NAME,
-        description="Default work item type",
-        is_default=True,
-    )
-    ProjectIssueType.objects.create(
-        project=project,
-        workspace_id=project.workspace_id,
-        issue_type=issue_type,
-        is_default=True,
-    )
+    with transaction.atomic():
+        issue_type = IssueType.objects.create(
+            workspace_id=project.workspace_id,
+            name=DEFAULT_ISSUE_TYPE_NAME,
+            description="Default work item type",
+            logo_props=dict(DEFAULT_ISSUE_TYPE_LOGO),
+            is_default=True,
+        )
+        ProjectIssueType.objects.create(
+            project=project,
+            workspace_id=project.workspace_id,
+            issue_type=issue_type,
+            is_default=True,
+        )
+        existing = {
+            name.lower()
+            for name in IssueType.objects.filter(
+                project_issue_types__project=project, project_issue_types__deleted_at__isnull=True
+            ).values_list("name", flat=True)
+        }
+        for spec in STANDARD_ISSUE_TYPES:
+            if spec["name"].lower() in existing:
+                continue
+            extra = IssueType.objects.create(
+                workspace_id=project.workspace_id,
+                name=spec["name"],
+                description=spec["description"],
+                logo_props={"glyph": spec["glyph"], "color": spec["color"]},
+            )
+            ProjectIssueType.objects.create(project=project, workspace_id=project.workspace_id, issue_type=extra)
     return issue_type
