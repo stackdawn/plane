@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from .. import BaseViewSet
 from plane.app.serializers import IssueTypeSerializer
 from plane.app.permissions import allow_permission, ProjectBasePermission, ROLE
-from plane.db.models import Issue, IssueType, Project, ProjectIssueType
+from plane.db.models import Issue, IssueType, Project, ProjectIssueType, ensure_default_issue_type
 
 
 class IssueTypeViewSet(BaseViewSet):
@@ -36,6 +36,11 @@ class IssueTypeViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def list(self, request, slug, project_id):
+        # A project with types enabled always has a default type, even if it was enabled
+        # by a path that skipped the project update hook.
+        project = Project.objects.get(pk=project_id, workspace__slug=slug)
+        if project.is_issue_type_enabled:
+            ensure_default_issue_type(project)
         serializer = IssueTypeSerializer(self.get_queryset(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

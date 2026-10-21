@@ -138,3 +138,16 @@ class TestIssueTypes:
 
         bad = session_client.patch(url, {"issue_type_card_style": "neon"}, format="json")
         assert bad.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.django_db
+    def test_list_creates_the_default_type_for_an_enabled_project(self, session_client, workspace, project):
+        # enabled directly, without going through the project update hook
+        Project.objects.filter(pk=project.pk).update(is_issue_type_enabled=True)
+        assert IssueType.objects.filter(project_issue_types__project=project).count() == 0
+
+        response = session_client.get(_url(workspace.slug, project.id))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [(t["name"], t["is_default"]) for t in response.json()] == [("Task", True)]
+        # idempotent
+        assert len(session_client.get(_url(workspace.slug, project.id)).json()) == 1
