@@ -22,6 +22,7 @@ from plane.app.views import (
     IssueViewSet,
     LabelViewSet,
     IssueTypeViewSet,
+    DoraMetricsEndpoint,
     CustomPropertyViewSet,
     IssueCustomPropertyValueEndpoint,
     ProjectCustomPropertyValuesEndpoint,
@@ -318,5 +319,10 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/custom-property-values/",
         IssueCustomPropertyValueEndpoint.as_view(),
         name="issue-custom-property-values",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/dora-metrics/",
+        DoraMetricsEndpoint.as_view(),
+        name="project-dora-metrics",
     ),
 ]

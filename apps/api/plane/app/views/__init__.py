@@ -144,6 +144,8 @@ from .issue.label import LabelViewSet, BulkCreateIssueLabelsEndpoint
 
 from .issue.type import IssueTypeViewSet
 
+from .issue.dora import DoraMetricsEndpoint
+
 from .issue.custom_property import (
     CustomPropertyViewSet,
     IssueCustomPropertyValueEndpoint,
