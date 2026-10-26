@@ -5,6 +5,7 @@
  */
 
 import { useMemo, useCallback } from "react";
+import { Activity } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
@@ -92,6 +93,16 @@ export const useNavigationItems = ({
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.inbox_view,
         sortOrder: 6,
+      },
+      {
+        i18n_key: "sidebar.dora",
+        key: "dora",
+        name: "DORA metrics",
+        href: `/${workspaceSlug}/projects/${projectId}/dora`,
+        icon: Activity,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+        shouldRender: !!project?.is_issue_type_enabled,
+        sortOrder: 7,
       },
     ],
     [project]

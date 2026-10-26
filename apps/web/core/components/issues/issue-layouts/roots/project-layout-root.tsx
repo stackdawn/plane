@@ -18,6 +18,7 @@ import { WorkItemFiltersRow } from "@/components/work-item-filters/filters-row";
 import { useIssues } from "@/hooks/store/use-issues";
 import { IssuesStoreContext } from "@/hooks/use-issue-layout-store";
 // local imports
+import { DoraStrip } from "@/components/dora/dora-strip";
 import { IssuePeekOverview } from "../../peek-overview";
 import { CalendarLayout } from "../calendar/roots/project-root";
 import { BaseGanttRoot } from "../gantt";
@@ -86,6 +87,7 @@ export const ProjectLayoutRoot = observer(function ProjectLayoutRoot() {
                 }}
               />
             )}
+            <DoraStrip workspaceSlug={workspaceSlug} projectId={projectId} />
             <div className="relative h-full w-full overflow-auto bg-surface-1">
               {/* mutation loader */}
               {issues?.getIssueLoader() === "mutation" && (

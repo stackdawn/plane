@@ -140,6 +140,13 @@ export const coreRoutes: RouteConfigEntry[] = [
               "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/issues/(list)/page.tsx"
             ),
           ]),
+          // DORA metrics
+          layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/dora/layout.tsx", [
+            route(
+              ":workspaceSlug/projects/:projectId/dora",
+              "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/dora/page.tsx"
+            ),
+          ]),
           // Issue Detail
           route(
             ":workspaceSlug/projects/:projectId/issues/:issueId",
