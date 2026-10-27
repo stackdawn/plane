@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useCallback } from "react";
-import { Activity } from "lucide-react";
+import { Activity, GitPullRequest } from "lucide-react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
@@ -103,6 +103,16 @@ export const useNavigationItems = ({
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.is_issue_type_enabled,
         sortOrder: 7,
+      },
+      {
+        i18n_key: "sidebar.engineering",
+        key: "engineering",
+        name: "Engineering",
+        href: `/${workspaceSlug}/projects/${projectId}/engineering`,
+        icon: GitPullRequest,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+        shouldRender: !!project?.is_issue_type_enabled,
+        sortOrder: 8,
       },
     ],
     [project]

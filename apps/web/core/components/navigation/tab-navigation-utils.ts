@@ -73,6 +73,7 @@ export const getTabUrl = (workspaceSlug: string, projectId: string, tabKey: stri
     pages: `${baseUrl}/pages`,
     intake: `${baseUrl}/intake`,
     dora: `${baseUrl}/dora`,
+    engineering: `${baseUrl}/engineering`,
     overview: `${baseUrl}/overview`,
     epics: `${baseUrl}/epics`,
   };

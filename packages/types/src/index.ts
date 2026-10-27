@@ -34,6 +34,7 @@ export * from "./issues/issue-identifier";
 export * from "./issues/issue-type";
 export * from "./issues/custom-property";
 export * from "./issues/dora";
+export * from "./issues/engineering";
 export * from "./issues/issue-property-values";
 export * from "./layout";
 export * from "./module";

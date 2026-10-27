@@ -140,6 +140,13 @@ export const coreRoutes: RouteConfigEntry[] = [
               "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/issues/(list)/page.tsx"
             ),
           ]),
+          // Engineering activity (GitHub)
+          layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/engineering/layout.tsx", [
+            route(
+              ":workspaceSlug/projects/:projectId/engineering",
+              "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/engineering/page.tsx"
+            ),
+          ]),
           // DORA metrics
           layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/dora/layout.tsx", [
             route(
