@@ -146,6 +146,8 @@ from .issue.type import IssueTypeViewSet
 
 from .issue.dora import DoraMetricsEndpoint
 
+from .issue.engineering import EngineeringMetricsEndpoint, GithubRepositoriesEndpoint
+
 from .issue.custom_property import (
     CustomPropertyViewSet,
     IssueCustomPropertyValueEndpoint,

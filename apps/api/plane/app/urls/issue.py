@@ -23,6 +23,8 @@ from plane.app.views import (
     LabelViewSet,
     IssueTypeViewSet,
     DoraMetricsEndpoint,
+    EngineeringMetricsEndpoint,
+    GithubRepositoriesEndpoint,
     CustomPropertyViewSet,
     IssueCustomPropertyValueEndpoint,
     ProjectCustomPropertyValuesEndpoint,
@@ -324,5 +326,15 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/dora-metrics/",
         DoraMetricsEndpoint.as_view(),
         name="project-dora-metrics",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/engineering-metrics/",
+        EngineeringMetricsEndpoint.as_view(),
+        name="project-engineering-metrics",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/github-repos/",
+        GithubRepositoriesEndpoint.as_view(),
+        name="project-github-repos",
     ),
 ]

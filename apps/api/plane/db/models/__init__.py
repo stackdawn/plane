@@ -9,6 +9,7 @@ from .base import BaseModel
 from .cycle import Cycle, CycleIssue, CycleUserProperties
 from .custom_property import CustomProperty, CustomPropertyOption, CustomPropertyValue
 from .deploy_board import DeployBoard
+from .github import GithubCommit, GithubPullRequest, GithubRepositoryLink, GithubReview
 from .draft import (
     DraftIssue,
     DraftIssueAssignee,
